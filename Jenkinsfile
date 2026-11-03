@@ -22,6 +22,7 @@ pipeline {
     post {
         always {
             sh '''
+                docker compose logs --tail=30 || true
                 docker compose down -v || true
                 rm -f .env
             '''
