@@ -1,17 +1,16 @@
 pipeline {
     agent any
     stages {
-        stage('Build') {
+        stage('Prepare env') {
             steps {
-                sh 'docker build -t devops-pipeline-lab .'
+                withCredentials([file(credentialsId: 'devops-lab-env', variable: 'ENV_FILE')]) {
+                    sh 'cp "$ENV_FILE" .env'
+                }
             }
         }
         stage('Run') {
             steps {
-                sh '''
-                    docker rm -f app
-                    docker run -d -p 3000:3000 --name app devops-pipeline-lab
-                '''
+                sh 'docker compose up -d --build'
             }
         }
         stage('Health check') {
@@ -21,6 +20,11 @@ pipeline {
         }
     }
     post {
-        always { sh 'docker rm -f app' }
+        always {
+            sh '''
+                docker compose down -v || true
+                rm -f .env
+            '''
+        }
     }
 }
